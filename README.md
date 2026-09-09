@@ -12,3 +12,9 @@ Backends
 Features
 I want to include clock modifications, this would allow double clocking certain sections of pipelines to run faster
 These would only allow modifications with 2^n for simplicity with the clock
+
+Format
+Make sure to format everything with ruff format
+
+Test
+Run test.sh to run the tests
