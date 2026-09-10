@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# [treesource] This script does signed tests
+# [treesource] This script does combinational tests
 
 import cocotb
 import os
