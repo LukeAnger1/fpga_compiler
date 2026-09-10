@@ -16,6 +16,8 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
     Returns one synced, two synced, and the max bit size needed
     """
 
+    assert one.type._signed is False, f"does not currently support signed operations"
+
     # Make sure the types match
     # TODO: Remove the bit size check from here and handle better later
     assert one.type == two.type, (
