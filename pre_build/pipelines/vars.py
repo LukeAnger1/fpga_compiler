@@ -38,6 +38,8 @@ def _post(self, result) -> Var:
 # This tracks the names, they all need to be unique
 COMPILED_NAME_PREFIX = "compiled_name"
 
+# IMPORTANT TODO: Add in time dominance for non time dependent vars
+
 
 class Var:
     def __init__(
@@ -70,6 +72,9 @@ class Var:
         # If the variable is set to a constant value nothing can really change about it
         self.constant_value = constant_value
         if constant_value is not None:
+            # Constant values should not be time dependent, this adds unnecasry pipelining steps
+            assert varType._time_dependent is False
+
             self.module.comb += self._signal.eq(constant_value)  # type: ignore
 
     def inc_delay(self) -> Var:

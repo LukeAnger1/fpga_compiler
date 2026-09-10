@@ -76,7 +76,21 @@ def test_operations_migen_pipeline():
     )
 
 
-# IMPORTANT TODO: Add in logic to check the constant value in pipeline
+# TODO: Should add in logic to try to simplify logic from known constant values
+#   EX: They are not time dependent
+def test_operations_migen_pipeline_constant():
+    module = MigenPipelineCompiler("test_math_operations_constant_pipeline")
+    a = Var(module, VarType(5, False, False, False, False), constant_value=1, name="a")
+    b = Var(module, VarType(5, False, False, False, False), name="b")
+    a = a + b
+    b = a + b
+    a = a + b
+    b = a + b
+    module.compile(
+        "hdl/tests_dont_use",
+        [a, b],
+    )
+
 
 if __name__ == "__main__":
     test_simple_migen_compilation()
@@ -84,4 +98,5 @@ if __name__ == "__main__":
     test_operations_migen_compilation()
     test_operations_migen()
     test_operations_migen_pipeline()
+    test_operations_migen_pipeline_constant()
     print(f"tests passed {__file__}")
