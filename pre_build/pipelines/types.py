@@ -13,6 +13,7 @@ class VarType:
         time_dependent: bool,
         automatic_registers: bool,
         prevent_overflow_underflow: bool,
+        enforce_same_bit_sizes: bool
     ) -> None:
         # Specifies wether to add reg to prevent overflow/underflow
         #   Greatly increase the area
@@ -32,6 +33,9 @@ class VarType:
         # This will automatically pipeline time dependent values based on hierastics if True
         self._automatic_registers = automatic_registers
 
+        # This will force the same bit sizes on operations
+        self._enforce_same_bit_sizes = enforce_same_bit_sizes
+
         # It does not make sense to have automatic registers while not being time dependent
         if self._automatic_registers and not self._time_dependent:
             raise ValueError(
@@ -45,6 +49,7 @@ class VarType:
             and self._time_dependent == other._time_dependent
             and self._automatic_registers == other._automatic_registers
             and self._prevent_overflow_underflow == other._prevent_overflow_underflow
+            and self._enforce_same_bit_sizes == self._enforce_same_bit_sizes
         )
 
 

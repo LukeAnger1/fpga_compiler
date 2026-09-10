@@ -40,8 +40,8 @@ def test_operations_migen_compilation():
 
 def test_operations_migen():
     module = MigenPipelineCompiler("test_math_operations_execution")
-    a = Var(module, VarType(5, False, True, True, False))
-    b = Var(module, VarType(5, False, True, True, False))
+    a = Var(module, VarType(5, False, True, True, False, False))
+    b = Var(module, VarType(5, False, True, True, False, False))
     module.compile(
         "hdl/tests_dont_use",
         [
@@ -64,8 +64,8 @@ def test_operations_migen():
 
 def test_operations_migen_pipeline():
     module = MigenPipelineCompiler("test_math_operations_pipeline")
-    a = Var(module, VarType(5, False, True, True, False), name="a")
-    b = Var(module, VarType(5, False, True, True, False), name="b")
+    a = Var(module, VarType(5, False, True, True, False, False), name="a")
+    b = Var(module, VarType(5, False, True, True, False, False), name="b")
     a = a + b
     b = a + b
     a = a + b
@@ -80,8 +80,8 @@ def test_operations_migen_pipeline():
 #   EX: They are not time dependent
 def test_operations_migen_pipeline_constant():
     module = MigenPipelineCompiler("test_math_operations_constant_pipeline")
-    a = Var(module, VarType(5, False, False, False, False), constant_value=1, name="a")
-    b = Var(module, VarType(5, False, False, False, False), name="b")
+    a = Var(module, VarType(5, False, False, False, False, False), constant_value=1, name="a")
+    b = Var(module, VarType(5, False, False, False, False, False), name="b")
     a = a + b
     b = a + b
     a = a + b
