@@ -36,19 +36,7 @@ def _post(self, result) -> Var:
 
 
 # This tracks the names, they all need to be unique
-COMPILED_NAME_PREFIX = "compiled_name_"
-
-
-def generate_unique_name(unique_name_tracker: set[str]) -> str:
-
-    # Find a unique number that is not already included in the unique names
-    count = len(unique_name_tracker)
-    str_count = COMPILED_NAME_PREFIX + str(count)
-    while str_count in unique_name_tracker:
-        count += 1
-        str_count = COMPILED_NAME_PREFIX + str(count)
-
-    return str_count
+COMPILED_NAME_PREFIX = "compiled_name"
 
 
 class Var:
@@ -67,23 +55,16 @@ class Var:
         self.module: CustomParentModule = module
 
         # Make sure the name is not already taken
-        str_name: str = (
-            name
-            if isinstance(name, str)
-            else generate_unique_name(self.module.unique_name_tracker)
-        )
-        assert str_name not in self.module.unique_name_tracker, (
-            f"str name is {str_name} with {self.module.unique_name_tracker}"
-        )
-
-        self.module.unique_name_tracker.add(str_name)
+        str_name: str = COMPILED_NAME_PREFIX if name is None else name
         self.name = str_name
 
         assert isinstance(varType, VarType), f"The type is {type(varType)}"
         self.type = varType
 
         # This is the actual signal representing the variable in hardware
-        self._signal = Signal(bits_sign=(varType._bit_size, varType._signed), name=name)
+        self._signal = Signal(
+            bits_sign=(varType._bit_size, varType._signed), name=str_name
+        )
         self.module.builtin_inputs.append(self._signal)  # type: ignore
 
         # If the variable is set to a constant value nothing can really change about it
@@ -104,6 +85,7 @@ class Var:
             ),
             None,
             self._delay + 1,
+            self.name,
         )
         self.module.sync += result._signal.eq(self._signal)  # type: ignore
         return result
@@ -143,7 +125,11 @@ class Var:
 
         # For signed values, we need to check the sign bit and negate if negative
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay,
+            name=self.name,
         )
 
         # Check if the value is negative (MSB is 1)
@@ -179,7 +165,7 @@ class Var:
             self.type,
             constant_value=None,
             delay=self._delay + 1,
-            name=None,
+            name=self.name,
         )
         # self.module.comb += result._signal.eq(self._signal + other._signal)
         # IMPORTANT TODO: Switch to combinational option too
@@ -202,7 +188,11 @@ class Var:
         # TODO: Incremement the max number of bits by 1 if safe overflow
 
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal - other._signal)  # type: ignore
 
@@ -231,7 +221,11 @@ class Var:
         # TODO: Double bit size for safe overflow
 
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal * other._signal)  # type: ignore
 
@@ -272,7 +266,7 @@ class Var:
             ),
             constant_value=None,
             delay=self._delay,
-            name=None,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal == other._signal)  # type: ignore
 
@@ -298,7 +292,7 @@ class Var:
             ),
             constant_value=None,
             delay=self._delay,
-            name=None,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal != other._signal)  # type: ignore
 
@@ -325,7 +319,7 @@ class Var:
             ),
             constant_value=None,
             delay=self._delay,
-            name=None,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal < other._signal)  # type: ignore
 
@@ -352,7 +346,7 @@ class Var:
             ),
             constant_value=None,
             delay=self._delay,
-            name=None,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal <= other._signal)  # type: ignore
 
@@ -379,7 +373,7 @@ class Var:
             ),
             constant_value=None,
             delay=self._delay,
-            name=None,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal > other._signal)  # type: ignore
 
@@ -406,7 +400,7 @@ class Var:
             ),
             constant_value=None,
             delay=self._delay,
-            name=None,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal >= other._signal)  # type: ignore
 
@@ -426,7 +420,11 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal & other._signal)  # type: ignore
 
@@ -446,7 +444,11 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal | other._signal)  # type: ignore
 
@@ -466,7 +468,11 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(self._signal ^ other._signal)  # type: ignore
 
@@ -480,7 +486,11 @@ class Var:
         """
 
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay,
+            name=self.name,
         )
         self.module.sync += result._signal.eq(~self._signal)  # type: ignore
 

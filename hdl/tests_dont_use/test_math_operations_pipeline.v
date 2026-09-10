@@ -3,15 +3,15 @@
 /* Machine-generated using Migen */
 module test_math_operations_pipeline(
 	output reg stupid_only_needed_for_clk_dont_ever_use,
-	input [4:0] var,
-	input [4:0] var_1,
-	output reg [4:0] var_2,
-	output reg [4:0] var_3,
-	output reg [4:0] var_4,
-	output reg [4:0] var_5,
-	output reg [4:0] var_6,
-	output reg [4:0] var_7,
-	output reg [4:0] var_8,
+	input [4:0] a,
+	input [4:0] b,
+	output reg [4:0] a_1,
+	output reg [4:0] b_1,
+	output reg [4:0] a_2,
+	output reg [4:0] a_3,
+	output reg [4:0] a_4,
+	output reg [4:0] a_5,
+	output reg [4:0] a_6,
 	input sys_clk,
 	input sys_rst
 );
@@ -20,22 +20,22 @@ module test_math_operations_pipeline(
 
 always @(posedge sys_clk) begin
 	stupid_only_needed_for_clk_dont_ever_use <= stupid_only_needed_for_clk_dont_ever_use;
-	var_2 <= (var + var_1);
-	var_3 <= var_1;
-	var_4 <= (var_2 + var_3);
-	var_5 <= var_2;
-	var_6 <= (var_5 + var_4);
-	var_7 <= var_4;
-	var_8 <= (var_6 + var_7);
+	a_1 <= (a + b);
+	b_1 <= b;
+	a_2 <= (a_1 + b_1);
+	a_3 <= a_1;
+	a_4 <= (a_3 + a_2);
+	a_5 <= a_2;
+	a_6 <= (a_4 + a_5);
 	if (sys_rst) begin
 		stupid_only_needed_for_clk_dont_ever_use <= 1'd0;
-		var_2 <= 5'd0;
-		var_3 <= 5'd0;
-		var_4 <= 5'd0;
-		var_5 <= 5'd0;
-		var_6 <= 5'd0;
-		var_7 <= 5'd0;
-		var_8 <= 5'd0;
+		a_1 <= 5'd0;
+		b_1 <= 5'd0;
+		a_2 <= 5'd0;
+		a_3 <= 5'd0;
+		a_4 <= 5'd0;
+		a_5 <= 5'd0;
+		a_6 <= 5'd0;
 	end
 end
 

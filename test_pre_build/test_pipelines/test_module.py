@@ -64,8 +64,8 @@ def test_operations_migen():
 
 def test_operations_migen_pipeline():
     module = MigenPipelineCompiler("test_math_operations_pipeline")
-    a = Var(module, VarType(5, False, True, True, False))
-    b = Var(module, VarType(5, False, True, True, False))
+    a = Var(module, VarType(5, False, True, True, False), name="a")
+    b = Var(module, VarType(5, False, True, True, False), name="b")
     a = a + b
     b = a + b
     a = a + b
@@ -75,6 +75,8 @@ def test_operations_migen_pipeline():
         [a, b],
     )
 
+
+# IMPORTANT TODO: Add in logic to check the constant value in pipeline
 
 if __name__ == "__main__":
     test_simple_migen_compilation()
