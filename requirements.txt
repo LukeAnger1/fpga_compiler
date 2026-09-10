@@ -1,4 +1,11 @@
+cocotb
 colorama
+find_libpython
+iniconfig
 migen
 numpy
+packaging
+pluggy
+Pygments
+pytest
 ruff
