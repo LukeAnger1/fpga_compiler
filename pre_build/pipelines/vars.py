@@ -75,6 +75,7 @@ class Var:
             # Constant values should not be time dependent, this adds unnecasry pipelining steps
             assert varType._time_dependent is False
 
+            # IMPORTANT TODO: Change this to the internal rep class I made
             self.module.comb += self._signal.eq(constant_value)  # type: ignore
 
     def inc_delay(self) -> Var:
