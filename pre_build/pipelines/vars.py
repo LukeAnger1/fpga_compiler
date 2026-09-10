@@ -3,7 +3,7 @@
 # [treesource] These are variables that are used to track the signals and their details
 """
 
-from migen import *
+from migen import *  # type: ignore
 
 from pre_build.pipelines.types import VarType
 from pre_build.pipelines.module import CustomParentModule
@@ -64,7 +64,7 @@ class Var:
         assert delay >= 0
         self._delay = delay
 
-        self.module = module
+        self.module: CustomParentModule = module
 
         # Make sure the name is not already taken
         str_name: str = (
@@ -84,12 +84,12 @@ class Var:
 
         # This is the actual signal representing the variable in hardware
         self._signal = Signal(bits_sign=(varType._bit_size, varType._signed), name=name)
-        self.module.builtin_inputs.append(self._signal)
+        self.module.builtin_inputs.append(self._signal)  # type: ignore
 
         # If the variable is set to a constant value nothing can really change about it
         self.constant_value = constant_value
         if constant_value is not None:
-            self.module.comb += self._signal.eq(constant_value)
+            self.module.comb += self._signal.eq(constant_value)  # type: ignore
 
     def inc_delay(self) -> Var:
         # Increments the delay and retuns the new variable
@@ -105,7 +105,7 @@ class Var:
             None,
             self._delay + 1,
         )
-        self.module.sync += result._signal.eq(self._signal)
+        self.module.sync += result._signal.eq(self._signal)  # type: ignore
         return result
 
     def sync_delay(self, other: Var) -> tuple[Var, Var]:
@@ -147,12 +147,12 @@ class Var:
         )
 
         # Check if the value is negative (MSB is 1)
-        self.module.comb += If(
-            self._signal[self.type._bit_size - 1],  # Check sign bit
-            result._signal.eq(-self._signal),  # Negate if negative
-        ).Else(
-            result._signal.eq(self._signal),  # Keep as-is if positive
-        )
+        self.module.comb += If(  # type: ignore
+            self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
+            result._signal.eq(-self._signal),  # Negate if negative # type: ignore
+        ).Else(  # type: ignore
+            result._signal.eq(self._signal),  # Keep as-is if positive # type: ignore
+        )  # type: ignore
 
         result, _ = result.sync_delay(self)
 
@@ -183,7 +183,7 @@ class Var:
         )
         # self.module.comb += result._signal.eq(self._signal + other._signal)
         # IMPORTANT TODO: Switch to combinational option too
-        result.module.sync += result._signal.eq(self._signal + other._signal)
+        result.module.sync += result._signal.eq(self._signal + other._signal)  # type: ignore
 
         return result
 
@@ -204,7 +204,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.sync += result._signal.eq(self._signal - other._signal)
+        self.module.sync += result._signal.eq(self._signal - other._signal)  # type: ignore
 
         return result
 
@@ -233,7 +233,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.sync += result._signal.eq(self._signal * other._signal)
+        self.module.sync += result._signal.eq(self._signal * other._signal)  # type: ignore
 
         return result
 
@@ -274,7 +274,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.sync += result._signal.eq(self._signal == other._signal)
+        self.module.sync += result._signal.eq(self._signal == other._signal)  # type: ignore
 
         return result
 
@@ -300,7 +300,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.sync += result._signal.eq(self._signal != other._signal)
+        self.module.sync += result._signal.eq(self._signal != other._signal)  # type: ignore
 
         return result
 
@@ -327,7 +327,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.sync += result._signal.eq(self._signal < other._signal)
+        self.module.sync += result._signal.eq(self._signal < other._signal)  # type: ignore
 
         return result
 
@@ -354,7 +354,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.sync += result._signal.eq(self._signal <= other._signal)
+        self.module.sync += result._signal.eq(self._signal <= other._signal)  # type: ignore
 
         return result
 
@@ -381,7 +381,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.sync += result._signal.eq(self._signal > other._signal)
+        self.module.sync += result._signal.eq(self._signal > other._signal)  # type: ignore
 
         return result
 
@@ -408,7 +408,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.sync += result._signal.eq(self._signal >= other._signal)
+        self.module.sync += result._signal.eq(self._signal >= other._signal)  # type: ignore
 
         return result
 
@@ -428,7 +428,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.sync += result._signal.eq(self._signal & other._signal)
+        self.module.sync += result._signal.eq(self._signal & other._signal)  # type: ignore
 
         return result
 
@@ -448,7 +448,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.sync += result._signal.eq(self._signal | other._signal)
+        self.module.sync += result._signal.eq(self._signal | other._signal)  # type: ignore
 
         return result
 
@@ -468,7 +468,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.sync += result._signal.eq(self._signal ^ other._signal)
+        self.module.sync += result._signal.eq(self._signal ^ other._signal)  # type: ignore
 
         return result
 
@@ -482,6 +482,6 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.sync += result._signal.eq(~self._signal)
+        self.module.sync += result._signal.eq(~self._signal)  # type: ignore
 
         return result
