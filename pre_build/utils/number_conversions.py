@@ -66,6 +66,10 @@ def get_needed_bits_to_represent_unsigned(value: int):
 
 
 def get_needed_bits_to_represent_signed(value: int) -> int:
+    # In the case we have 0 we need at least one bit
+    if value == 0:
+        return 1
+
     is_neg = 1 if value < 0 else 0
     return math.floor(math.log2(abs(value) + is_neg)) + 2
 

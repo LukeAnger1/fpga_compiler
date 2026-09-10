@@ -16,7 +16,6 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
     Returns one synced, two synced, and the max bit size needed
     """
 
-    assert one.type._signed is False, f"does not currently support signed operations"
     assert one.type._prevent_overflow_underflow is False, (
         f"Currently not supporting the overflow/underflow safety"
     )
@@ -280,10 +279,6 @@ class Var:
 
         assert not isinstance(other, int), (
             f"Multiplication by integer is not supported yet, using value {other}"
-        )
-
-        assert self.type._signed is False and other.type._signed is False, (
-            f"Does not support signed multiplication yet"
         )
 
         self, other = _pre(self, other)
