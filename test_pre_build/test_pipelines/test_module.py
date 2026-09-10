@@ -80,7 +80,12 @@ def test_operations_migen_pipeline():
 #   EX: They are not time dependent
 def test_operations_migen_pipeline_constant():
     module = MigenPipelineCompiler("test_math_operations_constant_pipeline")
-    a = Var(module, VarType(5, False, False, False, False, False), constant_value=1, name="a")
+    a = Var(
+        module,
+        VarType(5, False, False, False, False, False),
+        constant_value=1,
+        name="a",
+    )
     b = Var(module, VarType(5, False, False, False, False, False), name="b")
     a = a + b
     b = a + b

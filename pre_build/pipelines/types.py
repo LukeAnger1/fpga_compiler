@@ -13,7 +13,7 @@ class VarType:
         time_dependent: bool,
         automatic_registers: bool,
         prevent_overflow_underflow: bool,
-        enforce_same_bit_sizes: bool
+        enforce_same_bit_sizes: bool,
     ) -> None:
         # Specifies wether to add reg to prevent overflow/underflow
         #   Greatly increase the area
