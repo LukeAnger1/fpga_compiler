@@ -1,2 +1,4 @@
+colorama
+migen
 numpy
 ruff
