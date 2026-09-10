@@ -16,6 +16,12 @@ class RegValue:
 
         # We want to have enough bits to represent, this is checked in children
 
+        # Set in the children
+        self._internal_rep = -1
+
+    def get_internal(self) -> int:
+        return self._internal_rep
+
 
 class UnsignedRegValue(RegValue):
     def __init__(self, value: int, bit_size: int) -> None:
