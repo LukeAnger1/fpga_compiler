@@ -17,12 +17,18 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
     """
 
     assert one.type._signed is False, f"does not currently support signed operations"
+    assert one.type._prevent_overflow_underflow is False, (
+        f"Currently not supporting the overflow/underflow safety"
+    )
 
     # Make sure the types match
-    # TODO: Remove the bit size check from here and handle better later
-    assert one.type == two.type, (
-        f"{one.type} and {two.type} dont match, please manually cast to prevent issues"
-    )
+    assert one.type._bit_size == two.type._bit_size
+    assert one.type._signed == two.type._signed
+    # NOTE: The time dependent check does not matter, there is logic lower to maintain time dependence
+    # assert one.type._time_dependent == two.type._time_dependent
+    assert one.type._automatic_registers == two.type._automatic_registers
+    assert one.type._prevent_overflow_underflow == two.type._prevent_overflow_underflow
+    assert one.type._enforce_same_bit_sizes == two.type._enforce_same_bit_sizes
 
     # Add in logic to make sure the signals have the same delay
     one, two = one.sync_delay(two)
@@ -31,6 +37,52 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
     # max_bits = max(one.type._bit_size, two.type._bit_size)
 
     return one, two
+
+
+# Fatory functions to generate new var types
+#   This is used specifically for the dunder operations
+def construct_new_var_n_size(self: Var) -> Var:
+
+    # The new delay is calculated
+    if self.type._automatic_registers:
+        # Safely save in the registers
+        new_delay = self._delay + 1
+    else:
+        new_delay = self._delay
+
+    result = type(self)(
+        self.module,
+        self.type,
+        constant_value=None,
+        delay=new_delay,
+        name=self.name,
+    )
+    return result
+
+
+def construct_new_var_1_size(self: Var) -> Var:
+    # The new delay is calculated
+    if self.type._automatic_registers:
+        # Safely save in the registers
+        new_delay = self._delay + 1
+    else:
+        new_delay = self._delay
+
+    result = type(self)(
+        self.module,
+        VarType(
+            1,
+            False,
+            self.type._time_dependent,
+            self.type._automatic_registers,
+            self.type._prevent_overflow_underflow,
+            False,
+        ),
+        constant_value=None,
+        delay=new_delay,
+        name=self.name,
+    )
+    return result
 
 
 def _post(self, result) -> Var:
@@ -106,7 +158,18 @@ class Var:
             self (_type_): _description_
         """
 
-        max_delay = max(self._delay, other._delay)
+        # If there is no time dependence they are synced, return same
+        if self.type._time_dependent is False and other.type._time_dependent is False:
+            return self, other
+
+        # If there is one that is time dependent then the delay is the max delay
+        if self.type._time_dependent is False:
+            max_delay = other._delay
+        elif other.type._time_dependent is False:
+            max_delay = self._delay
+        else:
+            # They are both time dependent so sync to the slowest
+            max_delay = max(self._delay, other._delay)
 
         var1 = self
         var2 = other
@@ -133,23 +196,27 @@ class Var:
             )
 
         # For signed values, we need to check the sign bit and negate if negative
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
+        result = construct_new_var_n_size(self)
 
         # Check if the value is negative (MSB is 1)
-        self.module.comb += If(  # type: ignore
-            self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
-            result._signal.eq(-self._signal),  # Negate if negative # type: ignore
-        ).Else(  # type: ignore
-            result._signal.eq(self._signal),  # Keep as-is if positive # type: ignore
-        )  # type: ignore
-
-        result, _ = result.sync_delay(self)
+        if self.type._automatic_registers:
+            self.module.sync += If(  # type: ignore
+                self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
+                result._signal.eq(-self._signal),  # Negate if negative # type: ignore
+            ).Else(  # type: ignore
+                result._signal.eq(
+                    self._signal
+                ),  # Keep as-is if positive # type: ignore
+            )  # type: ignore
+        else:
+            self.module.comb += If(  # type: ignore
+                self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
+                result._signal.eq(-self._signal),  # Negate if negative # type: ignore
+            ).Else(  # type: ignore
+                result._signal.eq(
+                    self._signal
+                ),  # Keep as-is if positive # type: ignore
+            )  # type: ignore
 
         return result
 
@@ -169,16 +236,12 @@ class Var:
 
         # TODO: Incremement the max number of bits by 1 if safe overflow
 
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay + 1,
-            name=self.name,
-        )
-        # self.module.comb += result._signal.eq(self._signal + other._signal)
-        # IMPORTANT TODO: Switch to combinational option too
-        result.module.sync += result._signal.eq(self._signal + other._signal)  # type: ignore
+        result = construct_new_var_n_size(self)
+
+        if self.type._automatic_registers:
+            result.module.sync += result._signal.eq(self._signal + other._signal)  # type: ignore
+        else:
+            result.module.comb += result._signal.eq(self._signal + other._signal)  # type: ignore
 
         return result
 
@@ -196,14 +259,12 @@ class Var:
 
         # TODO: Incremement the max number of bits by 1 if safe overflow
 
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal - other._signal)  # type: ignore
+        result = construct_new_var_n_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal - other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal - other._signal)  # type: ignore
 
         return result
 
@@ -229,14 +290,12 @@ class Var:
 
         # TODO: Double bit size for safe overflow
 
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal * other._signal)  # type: ignore
+        result = construct_new_var_n_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal * other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal * other._signal)  # type: ignore
 
         return result
 
@@ -264,21 +323,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            VarType(
-                1,
-                False,
-                self.type._time_dependent,
-                self.type._automatic_registers,
-                self.type._prevent_overflow_underflow,
-                False,
-            ),
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal == other._signal)  # type: ignore
+        result = construct_new_var_1_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal == other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal == other._signal)  # type: ignore
 
         return result
 
@@ -291,21 +341,12 @@ class Var:
 
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            VarType(
-                1,
-                False,
-                self.type._time_dependent,
-                self.type._automatic_registers,
-                self.type._prevent_overflow_underflow,
-                False,
-            ),
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal != other._signal)  # type: ignore
+        result = construct_new_var_1_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal != other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal != other._signal)  # type: ignore
 
         return result
 
@@ -319,21 +360,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            VarType(
-                1,
-                False,
-                self.type._time_dependent,
-                self.type._automatic_registers,
-                self.type._prevent_overflow_underflow,
-                False,
-            ),
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal < other._signal)  # type: ignore
+        result = construct_new_var_1_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal < other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal < other._signal)  # type: ignore
 
         return result
 
@@ -347,21 +379,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            VarType(
-                1,
-                False,
-                self.type._time_dependent,
-                self.type._automatic_registers,
-                self.type._prevent_overflow_underflow,
-                False,
-            ),
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal <= other._signal)  # type: ignore
+        result = construct_new_var_1_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal <= other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal <= other._signal)  # type: ignore
 
         return result
 
@@ -375,21 +398,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            VarType(
-                1,
-                False,
-                self.type._time_dependent,
-                self.type._automatic_registers,
-                self.type._prevent_overflow_underflow,
-                False,
-            ),
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal > other._signal)  # type: ignore
+        result = construct_new_var_1_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal > other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal > other._signal)  # type: ignore
 
         return result
 
@@ -403,21 +417,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            VarType(
-                1,
-                False,
-                self.type._time_dependent,
-                self.type._automatic_registers,
-                self.type._prevent_overflow_underflow,
-                False,
-            ),
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal >= other._signal)  # type: ignore
+        result = construct_new_var_1_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal >= other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal >= other._signal)  # type: ignore
 
         return result
 
@@ -434,14 +439,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal & other._signal)  # type: ignore
+        result = construct_new_var_n_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal & other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal & other._signal)  # type: ignore
 
         return result
 
@@ -458,14 +461,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal | other._signal)  # type: ignore
+        result = construct_new_var_n_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal | other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal | other._signal)  # type: ignore
 
         return result
 
@@ -482,14 +483,12 @@ class Var:
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
 
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(self._signal ^ other._signal)  # type: ignore
+        result = construct_new_var_n_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(self._signal ^ other._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(self._signal ^ other._signal)  # type: ignore
 
         return result
 
@@ -500,13 +499,11 @@ class Var:
             A new variable representing the bitwise NOT result
         """
 
-        result = type(self)(
-            self.module,
-            self.type,
-            constant_value=None,
-            delay=self._delay,
-            name=self.name,
-        )
-        self.module.sync += result._signal.eq(~self._signal)  # type: ignore
+        result = construct_new_var_n_size(self)
+
+        if self.type._automatic_registers:
+            self.module.sync += result._signal.eq(~self._signal)  # type: ignore
+        else:
+            self.module.comb += result._signal.eq(~self._signal)  # type: ignore
 
         return result

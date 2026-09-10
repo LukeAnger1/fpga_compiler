@@ -97,6 +97,32 @@ def test_operations_migen_pipeline_constant():
     )
 
 
+def test_operations_migen_pipeline_time_dependent():
+    module = MigenPipelineCompiler("test_math_operations_time_dependent")
+    a = Var(
+        module,
+        VarType(5, False, True, False, False, False),
+        name="a",
+    )
+    b = Var(module, VarType(5, False, False, False, False, False), name="b")
+    c = Var(
+        module,
+        VarType(5, False, True, False, False, False),
+        name="c",
+    )
+    a = a + c
+    a = a + b
+    b = a + b
+    a = a + b
+    b = a + b
+    module.compile(
+        "hdl/tests_dont_use",
+        [a, b],
+    )
+
+
+# IMPORTANT TODO: Check pipelining for multiple layers
+
 if __name__ == "__main__":
     test_simple_migen_compilation()
     test_constant_value_migen_compilation()
@@ -104,4 +130,5 @@ if __name__ == "__main__":
     test_operations_migen()
     test_operations_migen_pipeline()
     test_operations_migen_pipeline_constant()
+    test_operations_migen_pipeline_time_dependent()
     print(f"tests passed {__file__}")
