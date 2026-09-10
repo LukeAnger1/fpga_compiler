@@ -252,7 +252,17 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, VarType(1, False, self.type._time_dependent, self.type._automatic_registers, self.type._prevent_overflow_underflow), constant_value=None, delay=self._delay, name=None
+            self.module,
+            VarType(
+                1,
+                False,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+            ),
+            constant_value=None,
+            delay=self._delay,
+            name=None,
         )
         self.module.comb += result._signal.eq(self._signal == other._signal)
 
@@ -270,7 +280,17 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, VarType(1, False, self.type._time_dependent, self.type._automatic_registers, self.type._prevent_overflow_underflow), constant_value=None, delay=self._delay, name=None
+            self.module,
+            VarType(
+                1,
+                False,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+            ),
+            constant_value=None,
+            delay=self._delay,
+            name=None,
         )
         self.module.comb += result._signal.eq(self._signal != other._signal)
 
@@ -289,7 +309,17 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, VarType(1, False, self.type._time_dependent, self.type._automatic_registers, self.type._prevent_overflow_underflow), constant_value=None, delay=self._delay, name=None
+            self.module,
+            VarType(
+                1,
+                False,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+            ),
+            constant_value=None,
+            delay=self._delay,
+            name=None,
         )
         self.module.comb += result._signal.eq(self._signal < other._signal)
 
@@ -308,7 +338,17 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-        self.module, VarType(1, False, self.type._time_dependent, self.type._automatic_registers, self.type._prevent_overflow_underflow), constant_value=None, delay=self._delay, name=None
+            self.module,
+            VarType(
+                1,
+                False,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+            ),
+            constant_value=None,
+            delay=self._delay,
+            name=None,
         )
         self.module.comb += result._signal.eq(self._signal <= other._signal)
 
@@ -327,7 +367,17 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, VarType(1, False, self.type._time_dependent, self.type._automatic_registers, self.type._prevent_overflow_underflow), constant_value=None, delay=self._delay, name=None
+            self.module,
+            VarType(
+                1,
+                False,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+            ),
+            constant_value=None,
+            delay=self._delay,
+            name=None,
         )
         self.module.comb += result._signal.eq(self._signal > other._signal)
 
@@ -346,7 +396,17 @@ class Var:
         self, other = _pre(self, other)
 
         result = type(self)(
-            self.module, VarType(1, False, self.type._time_dependent, self.type._automatic_registers, self.type._prevent_overflow_underflow), constant_value=None, delay=self._delay, name=None
+            self.module,
+            VarType(
+                1,
+                False,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+            ),
+            constant_value=None,
+            delay=self._delay,
+            name=None,
         )
         self.module.comb += result._signal.eq(self._signal >= other._signal)
 
@@ -410,7 +470,7 @@ class Var:
 
         # Add in logic to make sure the signals have the same delay
         self, other = _pre(self, other)
-        
+
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )

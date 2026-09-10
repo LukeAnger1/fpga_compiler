@@ -18,7 +18,7 @@ def test_constant_value_migen_compilation():
 
 
 def test_operations_migen_compilation():
-    pass# TODO: Finsih implementing this
+    pass  # TODO: Finsih implementing this
     # module = MigenPipelineCompiler("test_math_operations")
     # a = Var(module, VarType(5, False, True, True, False))
     # b = Var(module, VarType(5, False, True, True, False))
