@@ -93,8 +93,18 @@ class Var:
 
     def inc_delay(self) -> Var:
         # Increments the delay and retuns the new variable
-        result = type(self)(self.module, self.bits, self.signed, delay=self._delay + 1)
-        # NOTE: This does not take into account stalling, use the below function if stalling is needed
+        result = type(self)(
+            self.module,
+            VarType(
+                self.type._bit_size,
+                self.type._signed,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+            ),
+            None,
+            self._delay + 1,
+        )
         self.module.sync += result._signal.eq(self._signal)
         return result
 
@@ -165,15 +175,19 @@ class Var:
         # TODO: Incremement the max number of bits by 1 if safe overflow
 
         result = type(self)(
-            self.module, self.type, constant_value=None, delay=self._delay, name=None
+            self.module,
+            self.type,
+            constant_value=None,
+            delay=self._delay + 1,
+            name=None,
         )
-        self.module.comb += result._signal.eq(self._signal + other._signal)
-
-        result, _ = result.sync_delay(self)
+        # self.module.comb += result._signal.eq(self._signal + other._signal)
+        # IMPORTANT TODO: Switch to combinational option too
+        result.module.sync += result._signal.eq(self._signal + other._signal)
 
         return result
 
-    def __sub__(self, other: Self) -> Self:
+    def __sub__(self, other: Var) -> Var:
         """Overload the subtraction operator for variables
 
         Args:
@@ -190,9 +204,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.comb += result._signal.eq(self._signal - other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal - other._signal)
 
         return result
 
@@ -221,13 +233,11 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.comb += result._signal.eq(self._signal * other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal * other._signal)
 
         return result
 
-    def __truediv__(self, other: "Var") -> "Var":
+    def __truediv__(self, other: Var) -> Var:
         """Overload the division operator for variables
 
         Args:
@@ -264,9 +274,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.comb += result._signal.eq(self._signal == other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal == other._signal)
 
         return result
 
@@ -292,9 +300,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.comb += result._signal.eq(self._signal != other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal != other._signal)
 
         return result
 
@@ -321,9 +327,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.comb += result._signal.eq(self._signal < other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal < other._signal)
 
         return result
 
@@ -350,9 +354,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.comb += result._signal.eq(self._signal <= other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal <= other._signal)
 
         return result
 
@@ -379,9 +381,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.comb += result._signal.eq(self._signal > other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal > other._signal)
 
         return result
 
@@ -408,9 +408,7 @@ class Var:
             delay=self._delay,
             name=None,
         )
-        self.module.comb += result._signal.eq(self._signal >= other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal >= other._signal)
 
         return result
 
@@ -430,9 +428,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.comb += result._signal.eq(self._signal & other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal & other._signal)
 
         return result
 
@@ -452,9 +448,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.comb += result._signal.eq(self._signal | other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal | other._signal)
 
         return result
 
@@ -474,9 +468,7 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.comb += result._signal.eq(self._signal ^ other._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(self._signal ^ other._signal)
 
         return result
 
@@ -490,8 +482,6 @@ class Var:
         result = type(self)(
             self.module, self.type, constant_value=None, delay=self._delay, name=None
         )
-        self.module.comb += result._signal.eq(~self._signal)
-
-        result, _ = result.sync_delay(self)
+        self.module.sync += result._signal.eq(~self._signal)
 
         return result

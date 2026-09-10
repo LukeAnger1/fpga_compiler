@@ -62,9 +62,24 @@ def test_operations_migen():
     )
 
 
+def test_operations_migen_pipeline():
+    module = MigenPipelineCompiler("test_math_operations_pipeline")
+    a = Var(module, VarType(5, False, True, True, False))
+    b = Var(module, VarType(5, False, True, True, False))
+    a = a + b
+    b = a + b
+    a = a + b
+    b = a + b
+    module.compile(
+        "hdl/tests_dont_use",
+        [a, b],
+    )
+
+
 if __name__ == "__main__":
     test_simple_migen_compilation()
     test_constant_value_migen_compilation()
     test_operations_migen_compilation()
     test_operations_migen()
+    test_operations_migen_pipeline()
     print(f"tests passed {__file__}")
