@@ -59,5 +59,14 @@ else
     echo "passed timing tests"
 fi
 
+# TODO: Implement this later. I dont want to
+# python3 -m sim.equality_functions > tmp
+# if grep -q "test failed" tmp; then
+#     cat tmp
+#     exit
+# else
+#     echo "passed equality tests"
+# fi
+
 # Post steps
 ruff format # Need to format the build files
