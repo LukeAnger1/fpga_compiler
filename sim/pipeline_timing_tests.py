@@ -107,12 +107,10 @@ def compile_pipeline():
     b = Var(module, VarType(5, True, True, True, False, False), name="b")
     c = a + b
     d = b + c
-    global PIPELINE_DELAY
-    PIPELINE_DELAY = module.compile(
+    module.compile(
         "hdl/tests_dont_use",
         [b, c, d],
     )
-    print(f"the compiled pipeline delay is {PIPELINE_DELAY}")
 
 
 if __name__ == "__main__":
