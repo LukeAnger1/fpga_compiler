@@ -22,3 +22,7 @@ Make sure to format everything with ruff format
 
 Test
 Run test.sh to run the tests
+
+Add in backends
+CIRCT https://circt.llvm.org/docs/PyCDE/
+CALYX
