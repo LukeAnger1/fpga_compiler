@@ -13,6 +13,8 @@ Features
 I want to include clock modifications, this would allow double clocking certain sections of pipelines to run faster
 These would only allow modifications with 2^n for simplicity with the clock
 
+I want to add in a static message passing operation and dynamic one. This would require setting up dynamic then having a pass to see if the message would be gauranteed to be sent before the read in the pipeline to promote to static
+
 Format
 Make sure to format everything with ruff format
 
