@@ -23,6 +23,9 @@ Make sure to format everything with ruff format
 Test
 Run test.sh to run the tests
 
+I want to add in clock gating according to the below to ensure hardware has less area and easier to implement
+https://anysilicon.com/the-ultimate-guide-to-clock-gating/?hl=en-US
+
 Add in backends
 CIRCT https://circt.llvm.org/docs/PyCDE/
 CALYX
