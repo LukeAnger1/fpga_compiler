@@ -1,0 +1,1 @@
+`define test_constant_value_delay 0

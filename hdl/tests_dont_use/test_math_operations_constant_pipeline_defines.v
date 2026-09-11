@@ -1,0 +1,1 @@
+`define test_math_operations_constant_pipeline_delay 0

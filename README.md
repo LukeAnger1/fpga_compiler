@@ -15,6 +15,8 @@ These would only allow modifications with 2^n for simplicity with the clock
 
 I want to add in a static message passing operation and dynamic one. This would require setting up dynamic then having a pass to see if the message would be gauranteed to be sent before the read in the pipeline to promote to static
 
+Add logic to track all defines to make sure there are no conflicting ones
+
 Format
 Make sure to format everything with ruff format
 

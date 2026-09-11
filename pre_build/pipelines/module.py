@@ -8,6 +8,8 @@ from migen.fhdl import verilog
 
 from pre_build.utils.file_operations import save_file
 from pre_build.pipelines.types import VarType, ModuleType, NONE, PYTHON, CALYX, MIGEN
+from pre_build.macros.macros_generator import generate_define_file
+from pre_build.macros.runtime_python_generator import generate_python_file
 
 
 # This is the parent class
@@ -61,12 +63,18 @@ class MigenPipelineCompiler(CustomParentModule):
 
     def compile(
         self, output_dir: str = "hdl/compiled_pipelines", output_vars: list[Var] = []
-    ):
-        """Compile the module into a verilog file"""
+    ) -> int:
+        """Compile the module into a verilog file, returns the delay"""
 
-        # IMPORTANT TODO: Go through the comments below and decide what to add or not
         # Sync the outputs so everything comes out the same clock cycle, this is messy. Fuck it
-        # outputs = sync_outputs(outputs)
+        # TODO: Clean this code up if possible/feel like it
+        max_delay = max([output._delay for output in output_vars] + [0])
+        new_output = []
+        for output in output_vars:
+            while output._delay < max_delay:
+                output = output.inc_delay()
+            new_output.append(output)
+        output_vars = new_output
 
         # Convert the Var objects to their underlying signals
         ios = set(
@@ -75,27 +83,19 @@ class MigenPipelineCompiler(CustomParentModule):
             + [value._signal for value in output_vars]
         )
 
-        # # Add in the signals
-        # ios_signals = {var._signal for var in ios}
-
-        # # Add in the builtin signals
-        # ios_signals.update(
-        #     {signal for signal in self.builtin_inputs + self.builtin_outputs}
-        # )
-
-        # # Add in the signals that are passed in as arguments for more flexibility
-        # ios_signals.update(input_signals)
-        # ios_signals.update(output_signals)
-
-        # # Calculate the delay from the input signals to the output signals
-        # # IMPORTANT NOTE: This assumes the output delays have been synchronized
-        # delay = outputs[0]._delay - inputs[0]._delay
-        # self.macros[f"{self.__module__}_delay"] = delay
-
-        # # Include the delay in a specialized macro file for the module
-        # generate_define_file(self.macros, "hdl/compiled_macros", self.__module__)
-
         self._save_module(output_dir=output_dir, module_name=self.__module__, ios=ios)
 
-        # Return the output variables as they have changed, useful for debugging
-        # return outputs
+        # Calcualte the delay
+        delay = 0
+        if len(output_vars) > 0:
+            delay = output_vars[0]._delay
+
+        # Define the macros for this pipeline in dictionary
+        macros: dict[str, str | int] = dict()
+        macros[f"{self.__module__}_delay"] = delay
+
+        # Save this into a macro file
+        generate_define_file(macros, output_dir, f"{self.__module__}_defines")
+
+        # Save the runtime python files
+        generate_python_file(macros, "sim", f"{self.__module__}_runtime_constants")

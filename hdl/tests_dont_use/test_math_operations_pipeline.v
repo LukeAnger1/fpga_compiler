@@ -12,6 +12,7 @@ module test_math_operations_pipeline(
 	output reg [4:0] a_4,
 	output reg [4:0] a_5,
 	output reg [4:0] a_6,
+	output reg [4:0] a_7,
 	input sys_clk,
 	input sys_rst
 );
@@ -27,6 +28,7 @@ always @(posedge sys_clk) begin
 	a_4 <= (a_3 + a_2);
 	a_5 <= a_2;
 	a_6 <= (a_4 + a_5);
+	a_7 <= a_4;
 	if (sys_rst) begin
 		stupid_only_needed_for_clk_dont_ever_use <= 1'd0;
 		a_1 <= 5'd0;
@@ -36,6 +38,7 @@ always @(posedge sys_clk) begin
 		a_4 <= 5'd0;
 		a_5 <= 5'd0;
 		a_6 <= 5'd0;
+		a_7 <= 5'd0;
 	end
 end
 
