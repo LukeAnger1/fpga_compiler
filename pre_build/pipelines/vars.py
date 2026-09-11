@@ -21,7 +21,8 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
     )
 
     # Make sure the types match
-    assert one.type._bit_size == two.type._bit_size
+    # NOTE: The bit size is going to be fixed by extending the bits to allow logic to work
+    # assert one.type._bit_size == two.type._bit_size
     assert one.type._signed == two.type._signed
     # NOTE: The time dependent check does not matter, there is logic lower to maintain time dependence
     # assert one.type._time_dependent == two.type._time_dependent
@@ -32,16 +33,28 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
     # Add in logic to make sure the signals have the same delay
     one, two = one.sync_delay(two)
 
-    # TODO: Change this logic for bit operations and signed operations, force casting
-    # max_bits = max(one.type._bit_size, two.type._bit_size)
+    # Sync size, this is only done if both numbers are signed
+    #   This is because we need to account for the 1s that cause the flipage
+    #   As of now I think positive numbers are fine
 
-    return one, two
+    # Case where the bit sizes are the same
+    if one.type._bit_size == two.type._bit_size:
+        return one, two
+
+    # Find the lower bit sizes
+    if one.type._bit_size < two.type._bit_size:
+        return one.extend(two.type._bit_size), two
+
+    return one, two.extend(one.type._bit_size)
 
 
 # Fatory functions to generate new var types
 #   This is used specifically for the dunder operations
 def construct_new_var_n_size(self: Var) -> Var:
+    return construct_new_var_n_set_size(self, self.type._bit_size)
 
+
+def construct_new_var_n_set_size(self: Var, new_size: int) -> Var:
     # The new delay is calculated
     if self.type._automatic_registers:
         # Safely save in the registers
@@ -51,7 +64,14 @@ def construct_new_var_n_size(self: Var) -> Var:
 
     result = type(self)(
         self.module,
-        self.type,
+        VarType(
+            new_size,
+            self.type._signed,
+            self.type._time_dependent,
+            self.type._automatic_registers,
+            self.type._prevent_overflow_underflow,
+            self.type._enforce_same_bit_sizes,
+        ),
         constant_value=None,
         delay=new_delay,
         name=self.name,
@@ -130,6 +150,53 @@ class Var:
 
             # IMPORTANT TODO: Change this to the internal rep class I made
             self.module.comb += self._signal.eq(constant_value)  # type: ignore
+
+    def extend(self, new_bit_size: int) -> Var:
+        """
+        This is a function to add more bits to the bit size
+        """
+
+        assert new_bit_size > self.type._bit_size, (
+            f"cannot extend to a bit size that is not bigger"
+        )
+
+        # The construct builder will keep the same signness so should be fine there
+        result = construct_new_var_n_set_size(self, new_bit_size)
+        old_bit_size = self.type._bit_size
+
+        if self.type._signed:
+            # Extend with 1s if the last digit is a 1 to preserve the sign
+            statement = If(  # type: ignore
+                self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
+                result._signal.eq(
+                    Cat(
+                        self._signal,
+                        Replicate(Constant(1, 1), new_bit_size - old_bit_size),
+                    )
+                ),  # Negate if negative # type: ignore
+            ).Else(  # type: ignore
+                result._signal.eq(
+                    Cat(
+                        self._signal,
+                        Replicate(Constant(0, 1), new_bit_size - old_bit_size),
+                    )
+                ),  # Keep as-is if positive # type: ignore
+            )  # type: ignore
+        else:
+            # Extend with 0s
+            statement = result._signal.eq(
+                Cat(
+                    self._signal, Replicate(Constant(0, 1), new_bit_size - old_bit_size)
+                )
+            )
+
+        # Automatic or not
+        if self.type._automatic_registers:
+            self.module.sync += statement
+        else:
+            self.module.comb += statement
+
+        return result
 
     def inc_delay(self) -> Var:
         # Increments the delay and retuns the new variable
