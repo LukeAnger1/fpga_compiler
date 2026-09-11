@@ -41,6 +41,10 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
     if one.type._bit_size == two.type._bit_size:
         return one, two
 
+    # They have different bit sizes so if either one is type enforced we need to throw error
+    if one.type._enforce_same_bit_sizes or two.type._enforce_same_bit_sizes:
+        raise ValueError(f"The variables do not have the same size")
+
     # Find the lower bit sizes
     if one.type._bit_size < two.type._bit_size:
         return one.extend(two.type._bit_size), two

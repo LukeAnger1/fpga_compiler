@@ -123,10 +123,10 @@ def runner():
 
 def compile_pipeline_diff_bit_size_operations():
     module = MigenPipelineCompiler("test_diff_bit_size")
-    a = Var(module, VarType(TEST_BIT_SIZE, True, True, True, False, True), name="a")
-    b = Var(module, VarType(TEST_BIT_SIZE_2, True, True, True, False, True), name="b")
-    c = Var(module, VarType(TEST_BIT_SIZE, True, True, True, False, True), name="c")
-    d = Var(module, VarType(TEST_BIT_SIZE_2, True, True, True, False, True), name="d")
+    a = Var(module, VarType(TEST_BIT_SIZE, True, True, True, False, False), name="a")
+    b = Var(module, VarType(TEST_BIT_SIZE_2, True, True, True, False, False), name="b")
+    c = Var(module, VarType(TEST_BIT_SIZE, True, True, True, False, False), name="c")
+    d = Var(module, VarType(TEST_BIT_SIZE_2, True, True, True, False, False), name="d")
     e = a + b
     e = a - b
     e = a * b

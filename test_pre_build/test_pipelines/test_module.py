@@ -121,6 +121,41 @@ def test_operations_migen_pipeline_time_dependent():
     )
 
 
+def test_failure_on_different_bit_size():
+    module = MigenPipelineCompiler("test_math_operations_time_dependent")
+    a = Var(
+        module,
+        VarType(10, False, True, False, False, True),
+        name="a",
+    )
+    b = Var(module, VarType(5, False, False, False, False, True), name="b")
+    c = Var(
+        module,
+        VarType(7, False, True, False, False, False),
+        name="c",
+    )
+
+    failed_to_throw = True
+    try:
+        a + c
+    except:
+        failed_to_throw = False
+    if failed_to_throw:
+        raise ValueError(
+            f"failed to throw error when one wants enforced bit sizes and not other"
+        )
+
+    failed_to_throw = True
+    try:
+        a + b
+    except:
+        failed_to_throw = False
+    if failed_to_throw:
+        raise ValueError(
+            f"expected a failure as it is type enforced and different sizes"
+        )
+
+
 # IMPORTANT TODO: Check pipelining for multiple layers
 
 if __name__ == "__main__":
@@ -131,4 +166,5 @@ if __name__ == "__main__":
     test_operations_migen_pipeline()
     test_operations_migen_pipeline_constant()
     test_operations_migen_pipeline_time_dependent()
+    test_failure_on_different_bit_size()
     print(f"tests passed {__file__}")
