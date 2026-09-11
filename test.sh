@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Clean the build
+cd sim
+rm *_runtime_constants.py
+cd ..
+cd hdl/tests_dont_use
+rm *_defines.v
+cd ../..
+
 # Exit on failure
 set -e
 
@@ -50,3 +58,6 @@ if grep -q "test failed" tmp; then
 else
     echo "passed timing tests"
 fi
+
+# Post steps
+ruff format # Need to format the build files

@@ -13,7 +13,6 @@ from cocotb.runner import get_runner
 from pre_build.pipelines.vars import Var, VarType
 from pre_build.pipelines.module import MigenPipelineCompiler
 from pre_build.utils.number_conversions import SignedRegValue, UnsignedRegValue
-from sim.test_timing_runtime_constants import test_timing_delay
 
 # cheap way to get the name of current file for runner:
 test_file = os.path.basename(__file__).replace(".py", "")
@@ -29,6 +28,7 @@ async def generate_clock(clock_wire):
 
 @cocotb.test()
 async def test(dut):
+    from sim.test_timing_runtime_constants import test_timing_delay
 
     cocotb.start_soon(generate_clock(dut.sys_clk))
     await RisingEdge(dut.sys_clk)
@@ -76,7 +76,6 @@ def runner():
     sys.path.append(str(proj_path / "sim" / "model"))
     sources = [
         proj_path / "hdl" / "tests_dont_use" / "test_timing.v",
-        proj_path / "hdl" / "tests_dont_use" / "test_timing_defines.v",
     ]  # grow/modify this as needed.
     hdl_toplevel = "test_timing"
     build_test_args = ["-Wall"]  # ,"COCOTB_RESOLVE_X=ZEROS"]
