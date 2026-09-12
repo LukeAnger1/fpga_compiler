@@ -35,9 +35,6 @@ class MigenPipelineCompiler(CustomParentModule):
 
         self.__module__ = module_name
 
-        # Macros dictionary
-        self.macros = {}
-
     def _save_module(
         self,
         output_dir: str = "hdl",
