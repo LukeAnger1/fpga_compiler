@@ -1,11 +1,13 @@
 cocotb
 colorama
+executing
 find_libpython
 iniconfig
 migen
 numpy
 packaging
 pluggy
+pycde
 Pygments
 pytest
 ruff
