@@ -3,7 +3,7 @@
 # [treesource] This is the python file to test the code
 """
 
-from pre_build.pipelines.module import MigenPipelineCompiler
+from pre_build.pipelines.module_implementation.migen import MigenPipelineCompiler
 from pre_build.pipelines.vars import Var, VarType
 
 

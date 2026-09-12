@@ -6,7 +6,7 @@
 from migen import *  # type: ignore
 
 from pre_build.pipelines.types import VarType
-from pre_build.pipelines.module import CustomParentModule
+from pre_build.pipelines.module_implementation.migen import CustomParentModule
 
 
 # These are functions that are called within the Var class

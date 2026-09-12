@@ -11,7 +11,7 @@ from cocotb.triggers import Timer, RisingEdge, ReadOnly
 from cocotb.runner import get_runner
 
 from pre_build.pipelines.vars import Var, VarType
-from pre_build.pipelines.module import MigenPipelineCompiler
+from pre_build.pipelines.module_implementation.migen import MigenPipelineCompiler
 from pre_build.utils.number_conversions import SignedRegValue, UnsignedRegValue
 
 # cheap way to get the name of current file for runner:

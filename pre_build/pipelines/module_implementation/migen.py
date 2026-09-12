@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-# [treesource] This is the module class that can be converted to verilog module amongst other things
+# [treesource] This is the module class that can be converted to verilog module amongst other things using migen
 """
 
 from migen import *
@@ -10,16 +10,10 @@ from pre_build.utils.file_operations import save_file
 from pre_build.pipelines.types import VarType, ModuleType, NONE, PYTHON, CALYX, MIGEN
 from pre_build.macros.macros_generator import generate_define_file
 from pre_build.macros.runtime_python_generator import generate_python_file
+from pre_build.pipelines.module_implementation.parent import CustomParentModule
 
 
-# This is the parent class
-#   When making a new backend, make a child of this class
-class CustomParentModule(Module):
-    type = ModuleType(NONE)
-    unique_name_tracker: set[str] = set()
-
-
-class MigenPipelineCompiler(CustomParentModule):
+class MigenPipelineCompiler(CustomParentModule, Module):
     type = ModuleType(MIGEN)
 
     def __init__(self, module_name: str):
