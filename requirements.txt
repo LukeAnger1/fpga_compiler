@@ -1,4 +1,4 @@
-cocotb
+cocotb==1.9
 colorama
 executing
 find_libpython
