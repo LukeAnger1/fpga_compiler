@@ -14,6 +14,7 @@ class VarType:
         automatic_registers: bool,
         prevent_overflow_underflow: bool,
         enforce_same_bit_sizes: bool,
+        register_width: int = 1,
     ) -> None:
         # Specifies wether to add reg to prevent overflow/underflow
         #   Greatly increase the area
@@ -41,6 +42,14 @@ class VarType:
             raise ValueError(
                 f"We cannot add automatic registers when the type is not time dependent, that does not make sense"
             )
+
+        # Register width makes the registers 2^n times as big
+        #   This will allow a clock that is significantly slower
+        #   Going to need to do a 1 with 0s to control the clock
+        assert register_width > 0 and register_width & (register_width - 1) == 0, (
+            f"the register witdth needs to be 2^n"
+        )
+        self._register_width = register_width
 
     def __eq__(self, other: "VarType") -> bool:
         return (
