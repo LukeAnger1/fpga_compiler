@@ -42,7 +42,7 @@ class VarType:
                 f"We cannot add automatic registers when the type is not time dependent, that does not make sense"
             )
 
-    def __eq__(self, other: VarType) -> bool:
+    def __eq__(self, other: "VarType") -> bool:
         return (
             self._bit_size == other._bit_size
             and self._signed == other._signed
@@ -67,5 +67,5 @@ class ModuleType:
         assert type in ALLOWED_MODULE_TYPES
         self.type = type
 
-    def __eq__(self, value: ModuleType) -> bool:
+    def __eq__(self, value: "ModuleType") -> bool:
         return self.type == value.type

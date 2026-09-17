@@ -11,7 +11,7 @@ from pre_build.pipelines.module_implementation.migen import CustomParentModule
 
 # These are functions that are called within the Var class
 #   There are alot of repeat operations that this streamlines for development
-def _pre(one: Var, two: Var) -> tuple[Var, Var]:
+def _pre(one: "Var", two: "Var") -> tuple["Var", "Var"]:
     """
     Returns one synced, two synced, and the max bit size needed
     """
@@ -54,11 +54,11 @@ def _pre(one: Var, two: Var) -> tuple[Var, Var]:
 
 # Fatory functions to generate new var types
 #   This is used specifically for the dunder operations
-def construct_new_var_n_size(self: Var) -> Var:
+def construct_new_var_n_size(self: "Var") -> "Var":
     return construct_new_var_n_set_size(self, self.type._bit_size)
 
 
-def construct_new_var_n_set_size(self: Var, new_size: int) -> Var:
+def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
     # The new delay is calculated
     if self.type._automatic_registers:
         # Safely save in the registers
@@ -83,7 +83,7 @@ def construct_new_var_n_set_size(self: Var, new_size: int) -> Var:
     return result
 
 
-def construct_new_var_1_size(self: Var) -> Var:
+def construct_new_var_1_size(self: "Var") -> "Var":
     # The new delay is calculated
     if self.type._automatic_registers:
         # Safely save in the registers
@@ -108,7 +108,7 @@ def construct_new_var_1_size(self: Var) -> Var:
     return result
 
 
-def _post(self, result) -> Var:
+def _post(self, result) -> "Var":
     pass
 
 
@@ -155,7 +155,7 @@ class Var:
             # IMPORTANT TODO: Change this to the internal rep class I made
             self.module.comb += self._signal.eq(constant_value)  # type: ignore
 
-    def extend(self, new_bit_size: int) -> Var:
+    def extend(self, new_bit_size: int) -> "Var":
         """
         This is a function to add more bits to the bit size
         """
@@ -202,7 +202,7 @@ class Var:
 
         return result
 
-    def inc_delay(self) -> Var:
+    def inc_delay(self) -> "Var":
         # Increments the delay and retuns the new variable
         result = type(self)(
             self.module,
@@ -221,7 +221,7 @@ class Var:
         self.module.sync += result._signal.eq(self._signal)  # type: ignore
         return result
 
-    def sync_delay(self, other: Var) -> tuple[Var, Var]:
+    def sync_delay(self, other: "Var") -> tuple["Var", "Var"]:
         """This function syncs two variables to the same delay, returning the new synced variables in the same order
 
         Args:
@@ -252,7 +252,7 @@ class Var:
 
         return var1, var2
 
-    def __abs__(self) -> Var:
+    def __abs__(self) -> "Var":
         """Overload the absolute value operator for variables
 
         Returns:
@@ -291,7 +291,7 @@ class Var:
         return result
 
     # These are the math operations that are going to be overloaded
-    def __add__(self, other: Var) -> Var:
+    def __add__(self, other: "Var") -> "Var":
         """Overload the addition operator for variables
 
         Args:
@@ -315,7 +315,7 @@ class Var:
 
         return result
 
-    def __sub__(self, other: Var) -> Var:
+    def __sub__(self, other: "Var") -> "Var":
         """Overload the subtraction operator for variables
 
         Args:
@@ -338,7 +338,7 @@ class Var:
 
         return result
 
-    def __mul__(self, other: Var | int) -> Var:
+    def __mul__(self, other: "Var") -> "Var":
         """Overload the multiplication operator for variables
 
         Args:
@@ -365,7 +365,7 @@ class Var:
 
         return result
 
-    def __truediv__(self, other: Var) -> Var:
+    def __truediv__(self, other: "Var") -> "Var":
         """Overload the division operator for variables
 
         Args:
@@ -379,7 +379,7 @@ class Var:
         # If we do decide to implement it we should do a for loop by the bits for repeat logic then use the operations already defined
         raise NotImplementedError("Division operator is not implemented yet")
 
-    def __eq__(self, other: Var) -> Var:
+    def __eq__(self, other: "Var") -> "Var":
         """Overload the equality operator for variables
 
         Args:
@@ -398,7 +398,7 @@ class Var:
 
         return result
 
-    def __ne__(self, other: Var) -> Var:
+    def __ne__(self, other: "Var") -> "Var":
         """Overload the inequality operator for variables
 
         Args:
@@ -416,7 +416,7 @@ class Var:
 
         return result
 
-    def __lt__(self, other: Var) -> Var:
+    def __lt__(self, other: "Var") -> "Var":
         """Overload the less than operator for variables
 
         Args:
@@ -435,7 +435,7 @@ class Var:
 
         return result
 
-    def __le__(self, other: Var) -> Var:
+    def __le__(self, other: "Var") -> "Var":
         """Overload the less than or equal to operator for variables
 
         Args:
@@ -454,7 +454,7 @@ class Var:
 
         return result
 
-    def __gt__(self, other: Var) -> Var:
+    def __gt__(self, other: "Var") -> "Var":
         """Overload the greater than operator for variables
 
         Args:
@@ -473,7 +473,7 @@ class Var:
 
         return result
 
-    def __ge__(self, other: Var) -> Var:
+    def __ge__(self, other: "Var") -> "Var":
         """Overload the greater than or equal to operator for variables
 
         Args:
@@ -492,7 +492,7 @@ class Var:
 
         return result
 
-    def __and__(self, other: Var) -> Var:
+    def __and__(self, other: "Var") -> "Var":
         """Overload the bitwise AND operator for variables
 
         Args:
@@ -514,7 +514,7 @@ class Var:
 
         return result
 
-    def __or__(self, other: Var) -> Var:
+    def __or__(self, other: "Var") -> "Var":
         """Overload the bitwise OR operator for variables
 
         Args:
@@ -536,7 +536,7 @@ class Var:
 
         return result
 
-    def __xor__(self, other: Var) -> Var:
+    def __xor__(self, other: "Var") -> "Var":
         """Overload the bitwise XOR operator for variables
 
         Args:
@@ -558,7 +558,7 @@ class Var:
 
         return result
 
-    def __invert__(self) -> Var:
+    def __invert__(self) -> "Var":
         """Overload the bitwise NOT operator for variables
 
         Returns:

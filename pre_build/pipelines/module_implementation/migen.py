@@ -53,7 +53,7 @@ class MigenPipelineCompiler(CustomParentModule, Module):
         save_file(output_dir, f"{module_name}.v", verilog_code_str)
 
     def compile(
-        self, output_dir: str = "hdl/compiled_pipelines", output_vars: list[Var] = []
+        self, output_dir: str = "hdl/compiled_pipelines", output_vars: list["Var"] = []
     ) -> int:
         """Compile the module into a verilog file, returns the delay"""
 
