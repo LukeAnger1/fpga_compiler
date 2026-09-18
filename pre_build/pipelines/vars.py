@@ -194,11 +194,7 @@ class Var:
                 )
             )
 
-        # Automatic or not
-        if self.type._automatic_registers:
-            self.module.sync += statement
-        else:
-            self.module.comb += statement
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -218,7 +214,8 @@ class Var:
             self._delay + 1,
             self.name,
         )
-        self.module.sync += result._signal.eq(self._signal)  # type: ignore
+        statement = result._signal.eq(self._signal)  # type: ignore
+        self.module.sync_wrapper(statement, self.type)
         return result
 
     def sync_delay(self, other: "Var") -> tuple["Var", "Var"]:
@@ -269,24 +266,13 @@ class Var:
         result = construct_new_var_n_size(self)
 
         # Check if the value is negative (MSB is 1)
-        if self.type._automatic_registers:
-            self.module.sync += If(  # type: ignore
-                self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
-                result._signal.eq(-self._signal),  # Negate if negative # type: ignore
-            ).Else(  # type: ignore
-                result._signal.eq(
-                    self._signal
-                ),  # Keep as-is if positive # type: ignore
-            )  # type: ignore
-        else:
-            self.module.comb += If(  # type: ignore
-                self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
-                result._signal.eq(-self._signal),  # Negate if negative # type: ignore
-            ).Else(  # type: ignore
-                result._signal.eq(
-                    self._signal
-                ),  # Keep as-is if positive # type: ignore
-            )  # type: ignore
+        statement = If(  # type: ignore
+            self._signal[self.type._bit_size - 1],  # Check sign bit # type: ignore
+            result._signal.eq(-self._signal),  # Negate if negative # type: ignore
+        ).Else(  # type: ignore
+            result._signal.eq(self._signal),  # Keep as-is if positive # type: ignore
+        )  # type: ignore
+        self.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -308,10 +294,8 @@ class Var:
 
         result = construct_new_var_n_size(self)
 
-        if self.type._automatic_registers:
-            result.module.sync += result._signal.eq(self._signal + other._signal)  # type: ignore
-        else:
-            result.module.comb += result._signal.eq(self._signal + other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal + other._signal)
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -331,10 +315,8 @@ class Var:
 
         result = construct_new_var_n_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal - other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal - other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal - other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -358,10 +340,8 @@ class Var:
 
         result = construct_new_var_n_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal * other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal * other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal * other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -391,10 +371,8 @@ class Var:
 
         result = construct_new_var_1_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal == other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal == other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal == other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -409,10 +387,8 @@ class Var:
 
         result = construct_new_var_1_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal != other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal != other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal != other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -428,10 +404,8 @@ class Var:
 
         result = construct_new_var_1_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal < other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal < other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal < other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -447,10 +421,8 @@ class Var:
 
         result = construct_new_var_1_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal <= other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal <= other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal <= other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -466,10 +438,8 @@ class Var:
 
         result = construct_new_var_1_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal > other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal > other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal > other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -485,10 +455,8 @@ class Var:
 
         result = construct_new_var_1_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal >= other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal >= other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal >= other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -507,10 +475,8 @@ class Var:
 
         result = construct_new_var_n_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal & other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal & other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal & other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -529,10 +495,8 @@ class Var:
 
         result = construct_new_var_n_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal | other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal | other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal | other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -551,10 +515,8 @@ class Var:
 
         result = construct_new_var_n_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(self._signal ^ other._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(self._signal ^ other._signal)  # type: ignore
+        statement = result._signal.eq(self._signal ^ other._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 
@@ -567,9 +529,7 @@ class Var:
 
         result = construct_new_var_n_size(self)
 
-        if self.type._automatic_registers:
-            self.module.sync += result._signal.eq(~self._signal)  # type: ignore
-        else:
-            self.module.comb += result._signal.eq(~self._signal)  # type: ignore
+        statement = result._signal.eq(~self._signal)  # type: ignore
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
