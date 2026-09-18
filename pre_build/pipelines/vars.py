@@ -79,6 +79,7 @@ def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
         constant_value=None,
         delay=new_delay,
         name=self.name,
+        prevVarType=self.type,
     )
     return result
 
@@ -104,6 +105,7 @@ def construct_new_var_1_size(self: "Var") -> "Var":
         constant_value=None,
         delay=new_delay,
         name=self.name,
+        prevVarType=self.type,
     )
     return result
 
@@ -126,6 +128,7 @@ class Var:
         constant_value: None | int = None,
         delay: int = 0,
         name: str | None = None,
+        prevVarType: VarType | None = None,
     ) -> None:
         # It does not make sense to have a negative delay
         assert delay >= 0
@@ -154,6 +157,9 @@ class Var:
 
             # IMPORTANT TODO: Change this to the internal rep class I made
             self.module.comb += self._signal.eq(constant_value)  # type: ignore
+
+        # This keeps track of the previous type to know if we are changing types such as register width
+        self.prevVarType = prevVarType
 
     def extend(self, new_bit_size: int) -> "Var":
         """
@@ -213,6 +219,7 @@ class Var:
             None,
             self._delay + 1,
             self.name,
+            prevVarType=self.type,
         )
         statement = result._signal.eq(self._signal)  # type: ignore
         self.module.sync_wrapper(statement, self.type)
