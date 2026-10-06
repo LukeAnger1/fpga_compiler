@@ -1,0 +1,1 @@
+`define test_multi_cycle_same_cycle_1_delay 4

@@ -1,0 +1,1 @@
+`define test_multi_clock_change_width_1_delay 1

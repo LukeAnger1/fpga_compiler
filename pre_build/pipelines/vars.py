@@ -29,6 +29,9 @@ def _pre(one: "Var", two: "Var") -> tuple["Var", "Var"]:
     assert one.type._automatic_registers == two.type._automatic_registers
     assert one.type._prevent_overflow_underflow == two.type._prevent_overflow_underflow
     assert one.type._enforce_same_bit_sizes == two.type._enforce_same_bit_sizes
+    assert one.type._register_width == two.type._register_width, (
+        f"The register widths do not match ({one.type._register_width} vs {two.type._register_width}), use change_register_width first"
+    )
 
     # Add in logic to make sure the signals have the same delay
     one, two = one.sync_delay(two)
@@ -75,6 +78,7 @@ def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
             self.type._automatic_registers,
             self.type._prevent_overflow_underflow,
             self.type._enforce_same_bit_sizes,
+            self.type._register_width,
         ),
         constant_value=None,
         delay=new_delay,
@@ -101,6 +105,7 @@ def construct_new_var_1_size(self: "Var") -> "Var":
             self.type._automatic_registers,
             self.type._prevent_overflow_underflow,
             False,
+            self.type._register_width,
         ),
         constant_value=None,
         delay=new_delay,
@@ -147,7 +152,7 @@ class Var:
         self._signal = Signal(
             bits_sign=(varType._bit_size, varType._signed), name=str_name
         )
-        self.module.builtin_inputs.append(self._signal)  # type: ignore
+        self.module.register_signal(self._signal, varType)  # type: ignore
 
         # If the variable is set to a constant value nothing can really change about it
         self.constant_value = constant_value
@@ -156,7 +161,7 @@ class Var:
             assert varType._time_dependent is False
 
             # IMPORTANT TODO: Change this to the internal rep class I made
-            self.module.comb += self._signal.eq(constant_value)  # type: ignore
+            self.module.comb_wrapper(self._signal.eq(constant_value), varType)  # type: ignore
 
         # This keeps track of the previous type to know if we are changing types such as register width
         self.prevVarType = prevVarType
@@ -215,6 +220,7 @@ class Var:
                 self.type._automatic_registers,
                 self.type._prevent_overflow_underflow,
                 False,
+                self.type._register_width,
             ),
             None,
             self._delay + 1,
@@ -256,6 +262,39 @@ class Var:
 
         return var1, var2
 
+    def change_register_width(self, new_width: int) -> "Var":
+        """Returns a new variable with a different register width (clock), the new variable lives in the module for that clock
+
+        Args:
+            new_width: The new register width, needs to be 2^n
+        """
+
+        if new_width == self.type._register_width:
+            return self
+
+        result = type(self)(
+            self.module,
+            VarType(
+                self.type._bit_size,
+                self.type._signed,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+                self.type._enforce_same_bit_sizes,
+                new_width,
+            ),
+            None,
+            # TODO: The delay is in clock cycles of a different clock, need to convert this during wiring
+            self._delay,
+            self.name,
+            prevVarType=self.type,
+        )
+
+        # TODO: Wire self._signal (output of the old clock module) to result._signal (input of the new clock module)
+        #   For now nothing drives result._signal so it becomes an input port of the new module
+
+        return result
+
     def __abs__(self) -> "Var":
         """Overload the absolute value operator for variables
 
@@ -279,7 +318,7 @@ class Var:
         ).Else(  # type: ignore
             result._signal.eq(self._signal),  # Keep as-is if positive # type: ignore
         )  # type: ignore
-        self.sync_comb_wrapper(statement, self.type)
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 

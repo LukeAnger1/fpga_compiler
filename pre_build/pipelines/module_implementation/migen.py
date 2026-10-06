@@ -52,6 +52,9 @@ class MigenPipelineCompiler(CustomParentModule, Module):
 
         save_file(output_dir, f"{module_name}.v", verilog_code_str)
 
+    def register_signal(self, signal: Signal, varType: VarType):
+        self.builtin_inputs.append(signal)
+
     def sync_wrapper(self, statement, varType: VarType):
         self.sync += statement
 
@@ -103,3 +106,5 @@ class MigenPipelineCompiler(CustomParentModule, Module):
 
         # Save the runtime python files
         generate_python_file(macros, "sim", f"{self.__module__}_runtime_constants")
+
+        return delay
