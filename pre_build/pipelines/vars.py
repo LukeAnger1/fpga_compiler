@@ -5,7 +5,7 @@
 
 from migen import *  # type: ignore
 
-from pre_build.pipelines.types import VarType
+from pre_build.pipelines.types import VarType, ModuleType, MULTI
 from pre_build.pipelines.module_implementation.migen import CustomParentModule
 
 
@@ -29,6 +29,9 @@ def _pre(one: "Var", two: "Var") -> tuple["Var", "Var"]:
     assert one.type._automatic_registers == two.type._automatic_registers
     assert one.type._prevent_overflow_underflow == two.type._prevent_overflow_underflow
     assert one.type._enforce_same_bit_sizes == two.type._enforce_same_bit_sizes
+    assert one.type._register_width == two.type._register_width, (
+        f"The register widths do not match ({one.type._register_width} vs {two.type._register_width}), use change_register_width first"
+    )
 
     # Add in logic to make sure the signals have the same delay
     one, two = one.sync_delay(two)
@@ -61,8 +64,8 @@ def construct_new_var_n_size(self: "Var") -> "Var":
 def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
     # The new delay is calculated
     if self.type._automatic_registers:
-        # Safely save in the registers
-        new_delay = self._delay + 1
+        # Safely save in the registers, delay is in fast clock cycles so slower clocks take longer
+        new_delay = self._delay + self.module.stage_delay(self.type)
     else:
         new_delay = self._delay
 
@@ -75,10 +78,12 @@ def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
             self.type._automatic_registers,
             self.type._prevent_overflow_underflow,
             self.type._enforce_same_bit_sizes,
+            self.type._register_width,
         ),
         constant_value=None,
         delay=new_delay,
         name=self.name,
+        prevVarType=self.type,
     )
     return result
 
@@ -86,8 +91,8 @@ def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
 def construct_new_var_1_size(self: "Var") -> "Var":
     # The new delay is calculated
     if self.type._automatic_registers:
-        # Safely save in the registers
-        new_delay = self._delay + 1
+        # Safely save in the registers, delay is in fast clock cycles so slower clocks take longer
+        new_delay = self._delay + self.module.stage_delay(self.type)
     else:
         new_delay = self._delay
 
@@ -100,10 +105,12 @@ def construct_new_var_1_size(self: "Var") -> "Var":
             self.type._automatic_registers,
             self.type._prevent_overflow_underflow,
             False,
+            self.type._register_width,
         ),
         constant_value=None,
         delay=new_delay,
         name=self.name,
+        prevVarType=self.type,
     )
     return result
 
@@ -126,6 +133,7 @@ class Var:
         constant_value: None | int = None,
         delay: int = 0,
         name: str | None = None,
+        prevVarType: VarType | None = None,
     ) -> None:
         # It does not make sense to have a negative delay
         assert delay >= 0
@@ -144,7 +152,7 @@ class Var:
         self._signal = Signal(
             bits_sign=(varType._bit_size, varType._signed), name=str_name
         )
-        self.module.builtin_inputs.append(self._signal)  # type: ignore
+        self.module.register_signal(self._signal, varType)  # type: ignore
 
         # If the variable is set to a constant value nothing can really change about it
         self.constant_value = constant_value
@@ -153,7 +161,10 @@ class Var:
             assert varType._time_dependent is False
 
             # IMPORTANT TODO: Change this to the internal rep class I made
-            self.module.comb += self._signal.eq(constant_value)  # type: ignore
+            self.module.comb_wrapper(self._signal.eq(constant_value), varType)  # type: ignore
+
+        # This keeps track of the previous type to know if we are changing types such as register width
+        self.prevVarType = prevVarType
 
     def extend(self, new_bit_size: int) -> "Var":
         """
@@ -200,6 +211,16 @@ class Var:
 
     def inc_delay(self) -> "Var":
         # Increments the delay and retuns the new variable
+
+        # Slower clocks can only delay in steps of N fast cycles, so delay by one fast cycle in the fast clock
+        #   The copy that holds the value changes each fast cycle so it has to go through the fast clock anyways
+        if self.module.type == ModuleType(MULTI) and self.type._register_width > 1:
+            return (
+                self.change_register_width(1)
+                .inc_delay()
+                .change_register_width(self.type._register_width)
+            )
+
         result = type(self)(
             self.module,
             VarType(
@@ -209,10 +230,12 @@ class Var:
                 self.type._automatic_registers,
                 self.type._prevent_overflow_underflow,
                 False,
+                self.type._register_width,
             ),
             None,
             self._delay + 1,
             self.name,
+            prevVarType=self.type,
         )
         statement = result._signal.eq(self._signal)  # type: ignore
         self.module.sync_wrapper(statement, self.type)
@@ -249,6 +272,39 @@ class Var:
 
         return var1, var2
 
+    def change_register_width(self, new_width: int) -> "Var":
+        """Returns a new variable with a different register width (clock), the new variable lives in the module for that clock
+
+        Args:
+            new_width: The new register width, needs to be 2^n
+        """
+
+        if new_width == self.type._register_width:
+            return self
+
+        result = type(self)(
+            self.module,
+            VarType(
+                self.type._bit_size,
+                self.type._signed,
+                self.type._time_dependent,
+                self.type._automatic_registers,
+                self.type._prevent_overflow_underflow,
+                self.type._enforce_same_bit_sizes,
+                new_width,
+            ),
+            None,
+            # The delay is in fast clock cycles so it does not change when crossing clocks
+            self._delay,
+            self.name,
+            prevVarType=self.type,
+        )
+
+        # Wire the old clock signal to the new clock signal
+        self.module.connect_register_width(self, result)
+
+        return result
+
     def __abs__(self) -> "Var":
         """Overload the absolute value operator for variables
 
@@ -272,7 +328,7 @@ class Var:
         ).Else(  # type: ignore
             result._signal.eq(self._signal),  # Keep as-is if positive # type: ignore
         )  # type: ignore
-        self.sync_comb_wrapper(statement, self.type)
+        self.module.sync_comb_wrapper(statement, self.type)
 
         return result
 

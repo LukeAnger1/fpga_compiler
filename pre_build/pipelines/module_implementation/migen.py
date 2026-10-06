@@ -52,6 +52,17 @@ class MigenPipelineCompiler(CustomParentModule, Module):
 
         save_file(output_dir, f"{module_name}.v", verilog_code_str)
 
+    def register_signal(self, signal: Signal, varType: VarType):
+        self.builtin_inputs.append(signal)
+
+    def stage_delay(self, varType: VarType) -> int:
+        # Everything is on the same clock so a register is a single cycle
+        return 1
+
+    def connect_register_width(self, source: "Var", destination: "Var"):
+        # Everything is on the same clock so the register width does not change the hardware
+        self.comb += destination._signal.eq(source._signal)
+
     def sync_wrapper(self, statement, varType: VarType):
         self.sync += statement
 
@@ -93,6 +104,13 @@ class MigenPipelineCompiler(CustomParentModule, Module):
         delay = 0
         if len(output_vars) > 0:
             delay = output_vars[0]._delay
+
+        self._save_macros(output_dir, delay)
+
+        return delay
+
+    def _save_macros(self, output_dir: str, delay: int):
+        """Save the macros for the pipeline into a verilog define file and a python file for the sims"""
 
         # Define the macros for this pipeline in dictionary
         macros: dict[str, str | int] = dict()

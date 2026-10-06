@@ -3,7 +3,12 @@
 # [treesource] This is the python file to test the code
 """
 
+import os
+
 from pre_build.pipelines.module_implementation.migen import MigenPipelineCompiler
+from pre_build.pipelines.module_implementation.multi_clock import (
+    MultiClockPipelineCompiler,
+)
 from pre_build.pipelines.vars import Var, VarType
 
 
@@ -156,6 +161,51 @@ def test_failure_on_different_bit_size():
         )
 
 
+def test_multi_clock_same_clock():
+    module = MultiClockPipelineCompiler("test_multi_cycle_same_cycle")
+    a = Var(module, VarType(5, False, True, True, False, False), name="a")
+    b = Var(module, VarType(5, False, True, True, False, False), name="b")
+    a = a + b
+    b = a + b
+    a = a + b
+    b = a + b
+    module.compile("hdl/tests_dont_use", [a, b])
+
+    assert list(module.register_width_mapping.keys()) == [1]
+    assert os.path.exists("hdl/tests_dont_use/test_multi_cycle_same_cycle.v")
+
+
+def test_multi_clock_change_width():
+    module = MultiClockPipelineCompiler("test_multi_clock_change_width")
+    a = Var(module, VarType(5, False, True, True, False, False), name="a")
+    b = Var(module, VarType(5, False, True, True, False, False), name="b")
+    c = a + b
+    d = c.change_register_width(2)
+    e = Var(module, VarType(5, False, True, True, False, False, 2), name="e")
+    f = d + e
+    assert f.type._register_width == 2
+    delay = module.compile("hdl/tests_dont_use", [c, f])
+
+    # c is 1 fast cycle, f is a register in the 2x slower clock so 2 more fast cycles
+    assert delay == 3
+    assert sorted(module.register_width_mapping.keys()) == [1, 2]
+    assert os.path.exists("hdl/tests_dont_use/test_multi_clock_change_width.v")
+
+
+def test_failure_on_different_register_width():
+    module = MultiClockPipelineCompiler("test_multi_clock_different_width")
+    a = Var(module, VarType(5, False, True, True, False, False), name="a")
+    d = a.change_register_width(2)
+
+    failed_to_throw = True
+    try:
+        a + d
+    except:
+        failed_to_throw = False
+    if failed_to_throw:
+        raise ValueError(f"expected a failure as the register widths are different")
+
+
 # IMPORTANT TODO: Check pipelining for multiple layers
 
 if __name__ == "__main__":
@@ -167,4 +217,7 @@ if __name__ == "__main__":
     test_operations_migen_pipeline_constant()
     test_operations_migen_pipeline_time_dependent()
     test_failure_on_different_bit_size()
+    test_multi_clock_same_clock()
+    test_multi_clock_change_width()
+    test_failure_on_different_register_width()
     print(f"tests passed {__file__}")

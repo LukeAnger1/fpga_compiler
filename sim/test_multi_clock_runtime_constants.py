@@ -1,0 +1,1 @@
+test_multi_clock_delay = 10

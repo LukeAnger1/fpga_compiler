@@ -58,7 +58,8 @@ class VarType:
             and self._time_dependent == other._time_dependent
             and self._automatic_registers == other._automatic_registers
             and self._prevent_overflow_underflow == other._prevent_overflow_underflow
-            and self._enforce_same_bit_sizes == self._enforce_same_bit_sizes
+            and self._enforce_same_bit_sizes == other._enforce_same_bit_sizes
+            and self._register_width == other._register_width
         )
 
 
@@ -66,8 +67,9 @@ class VarType:
 PYTHON = "python"
 MIGEN = "migen"
 CALYX = "calyx"
+MULTI = "multi"
 NONE = "None"
-ALLOWED_MODULE_TYPES = [PYTHON, MIGEN, CALYX, NONE]
+ALLOWED_MODULE_TYPES = [PYTHON, MIGEN, CALYX, MULTI, NONE]
 
 
 class ModuleType:
