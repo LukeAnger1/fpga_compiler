@@ -172,7 +172,7 @@ def test_multi_clock_same_clock():
     module.compile("hdl/tests_dont_use", [a, b])
 
     assert list(module.register_width_mapping.keys()) == [1]
-    assert os.path.exists("hdl/tests_dont_use/test_multi_cycle_same_cycle_1.v")
+    assert os.path.exists("hdl/tests_dont_use/test_multi_cycle_same_cycle.v")
 
 
 def test_multi_clock_change_width():
@@ -184,11 +184,12 @@ def test_multi_clock_change_width():
     e = Var(module, VarType(5, False, True, True, False, False, 2), name="e")
     f = d + e
     assert f.type._register_width == 2
-    module.compile("hdl/tests_dont_use", [c, f])
+    delay = module.compile("hdl/tests_dont_use", [c, f])
 
+    # c is 1 fast cycle, f is a register in the 2x slower clock so 2 more fast cycles
+    assert delay == 3
     assert sorted(module.register_width_mapping.keys()) == [1, 2]
-    assert os.path.exists("hdl/tests_dont_use/test_multi_clock_change_width_1.v")
-    assert os.path.exists("hdl/tests_dont_use/test_multi_clock_change_width_2.v")
+    assert os.path.exists("hdl/tests_dont_use/test_multi_clock_change_width.v")
 
 
 def test_failure_on_different_register_width():

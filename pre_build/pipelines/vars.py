@@ -5,7 +5,7 @@
 
 from migen import *  # type: ignore
 
-from pre_build.pipelines.types import VarType
+from pre_build.pipelines.types import VarType, ModuleType, MULTI
 from pre_build.pipelines.module_implementation.migen import CustomParentModule
 
 
@@ -64,8 +64,8 @@ def construct_new_var_n_size(self: "Var") -> "Var":
 def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
     # The new delay is calculated
     if self.type._automatic_registers:
-        # Safely save in the registers
-        new_delay = self._delay + 1
+        # Safely save in the registers, delay is in fast clock cycles so slower clocks take longer
+        new_delay = self._delay + self.module.stage_delay(self.type)
     else:
         new_delay = self._delay
 
@@ -91,8 +91,8 @@ def construct_new_var_n_set_size(self: "Var", new_size: int) -> "Var":
 def construct_new_var_1_size(self: "Var") -> "Var":
     # The new delay is calculated
     if self.type._automatic_registers:
-        # Safely save in the registers
-        new_delay = self._delay + 1
+        # Safely save in the registers, delay is in fast clock cycles so slower clocks take longer
+        new_delay = self._delay + self.module.stage_delay(self.type)
     else:
         new_delay = self._delay
 
@@ -211,6 +211,16 @@ class Var:
 
     def inc_delay(self) -> "Var":
         # Increments the delay and retuns the new variable
+
+        # Slower clocks can only delay in steps of N fast cycles, so delay by one fast cycle in the fast clock
+        #   The copy that holds the value changes each fast cycle so it has to go through the fast clock anyways
+        if self.module.type == ModuleType(MULTI) and self.type._register_width > 1:
+            return (
+                self.change_register_width(1)
+                .inc_delay()
+                .change_register_width(self.type._register_width)
+            )
+
         result = type(self)(
             self.module,
             VarType(
@@ -284,14 +294,14 @@ class Var:
                 new_width,
             ),
             None,
-            # TODO: The delay is in clock cycles of a different clock, need to convert this during wiring
+            # The delay is in fast clock cycles so it does not change when crossing clocks
             self._delay,
             self.name,
             prevVarType=self.type,
         )
 
-        # TODO: Wire self._signal (output of the old clock module) to result._signal (input of the new clock module)
-        #   For now nothing drives result._signal so it becomes an input port of the new module
+        # Wire the old clock signal to the new clock signal
+        self.module.connect_register_width(self, result)
 
         return result
 

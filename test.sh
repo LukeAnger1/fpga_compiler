@@ -59,6 +59,14 @@ else
     echo "passed timing tests"
 fi
 
+python3 -m sim.multi_clock_tests > tmp
+if grep -q "test failed" tmp; then
+    cat tmp
+    exit
+else
+    echo "passed multi clock tests"
+fi
+
 # TODO: Implement this later. I dont want to
 # python3 -m sim.equality_functions > tmp
 # if grep -q "test failed" tmp; then
